@@ -31,7 +31,7 @@ These lessons will show how to use a database to explore the expeditions' data.
 > ## Prerequisites {.prereq}
 >
 > -    UNIX shell plus SQLite3 or Firefox SQLite plugin.
-> -    [survey.sqlite](http://files.software-carpentry.org/survey.sqlite)
+> -    [survey.db](https://github.com/cac-staff/summer-school-2016-SQLite/raw/gh-pages/survey.db)
 
 > ## Getting ready {.getready}
 >
