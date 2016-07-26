@@ -129,7 +129,7 @@ connection <- dbConnect(SQLite(), "survey.db")
 
 getName <- function(personID) {
   query <- "SELECT personal || ' ' || family FROM Person WHERE ident == ?"
-  dbGetPreparedQuery(connection, query, data.frame(personID))
+  return(dbGetPreparedQuery(connection, query, data.frame(personID)))
 }
 
 print(paste("full name for dyer:", getName('dyer')))
