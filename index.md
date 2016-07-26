@@ -57,7 +57,8 @@ These lessons will show how to use a database to explore the expeditions' data.
 7.  [Combining Data](07-join.html)
 8.  [Data Hygiene](08-hygiene.html)
 9.  [Creating and Modifying Data](09-create.html)
-10. [Programming with Databases](10-prog.html)
+10. [Programming with Databases - Python](10-prog.html)
+11. [Programming with Databases - R](11-prog-R.html)
 
 ## Other Resources
 
