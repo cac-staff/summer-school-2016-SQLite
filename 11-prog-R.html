@@ -40,7 +40,7 @@
 </ul>
 </div>
 </section>
-<p>To close, let’s have a look at how to access a database from a general-purpose programming language like Python. Other languages use almost exactly the same model: library and function names may differ, but the concepts are the same.</p>
+<p>To close, let’s have a look at how to access a database from a data analysis language like R. Other languages use almost exactly the same model: library and function names may differ, but the concepts are the same.</p>
 <p>Here’s a short R program that selects latitudes and longitudes from an SQLite database stored in a file called <code>survey.db</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(RSQLite)
 connection &lt;-<span class="st"> </span><span class="kw">dbConnect</span>(<span class="kw">SQLite</span>(), <span class="st">&quot;survey.db&quot;</span>)
@@ -53,8 +53,7 @@ results &lt;-<span class="st"> </span><span class="kw">dbGetQuery</span>(connect
 3 -48.87 -123.40</code></pre>
 <p>The program starts by importing the <code>RSQLite</code> library. If we were connecting to MySQL, DB2, or some other database, we would import a different library, but all of them provide the same functions, so that the rest of our program does not have to change (at least, not much) if we switch from one database to another.</p>
 <p>Line 2 establishes a connection to the database. Since we’re using SQLite, all we need to specify is the name of the database file. Other systems may require us to provide a username and password as well.</p>
-<p>On line 3, we retrieve the results from an SQL query. It’s our job to make sure that SQL is properly formatted; if it isn’t, or if something goes wrong when it is being executed, the database will report an error.</p>
-<p>The database returns the results of the query to us in response to the <code>cursor.fetchall</code> call on line 5. This result is a dataframe with one row for each entry and one column for each column in the database.</p>
+<p>On line 3, we retrieve the results from an SQL query. It’s our job to make sure that SQL is properly formatted; if it isn’t, or if something goes wrong when it is being executed, the database will report an error. This result is a dataframe with one row for each entry and one column for each column in the database.</p>
 <p>Finally, the last line closes our connection, since the database can only keep a limited number of these open at one time. Since establishing a connection takes time, though, we shouldn’t open a connection, do one operation, then close the connection, only to reopen it a few microseconds later to do another operation. Instead, it’s normal to create one connection that stays open for the lifetime of the program.</p>
 <p>Queries in real applications will often depend on values provided by users. For example, this function takes a user’s ID as a parameter and returns their name:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(RSQLite)
@@ -78,21 +77,19 @@ getName &lt;-<span class="st"> </span>function(personID) {
 <p>If we execute this, it will erase one of the tables in our database.</p>
 <p>This is called an <a href="reference.html#sql-injection-attack">SQL injection attack</a>, and it has been used to attack thousands of programs over the years. In particular, many web sites that take data from users insert values directly into queries without checking them carefully first.</p>
 <p>Since a villain might try to smuggle commands into our queries in many different ways, the safest way to deal with this threat is to replace characters like quotes with their escaped equivalents, so that we can safely put whatever the user gives us inside a string. We can do this by using a <a href="reference.html#prepared-statement">prepared statement</a> instead of formatting our statements as strings. Here’s what our example program looks like if we do this:</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="kw">def</span> get_name(database_file, person_id):
-    query <span class="op">=</span> <span class="st">&quot;SELECT personal || &#39; &#39; || family FROM Person WHERE id=?;&quot;</span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(RSQLite)
+connection &lt;-<span class="st"> </span><span class="kw">dbConnect</span>(<span class="kw">SQLite</span>(), <span class="st">&quot;survey.db&quot;</span>)
 
-    connection <span class="op">=</span> sqlite3.<span class="ex">connect</span>(database_file)
-    cursor <span class="op">=</span> connection.cursor()
-    cursor.execute(query, [person_id])
-    results <span class="op">=</span> cursor.fetchall()
-    cursor.close()
-    connection.close()
+getName &lt;-<span class="st"> </span>function(personID) {
+  query &lt;-<span class="st"> &quot;SELECT personal || &#39; &#39; || family FROM Person WHERE ident == ?&quot;</span>
+  <span class="kw">dbGetPreparedQuery</span>(connection, query, <span class="kw">data.frame</span>(personID))
+}
 
-    <span class="cf">return</span> results[<span class="dv">0</span>][<span class="dv">0</span>]
+<span class="kw">print</span>(<span class="kw">paste</span>(<span class="st">&quot;full name for dyer:&quot;</span>, <span class="kw">getName</span>(<span class="st">&#39;dyer&#39;</span>)))
 
-<span class="bu">print</span> <span class="st">&quot;full name for dyer:&quot;</span>, get_name(<span class="st">&#39;survey.sqlite&#39;</span>, <span class="st">&#39;dyer&#39;</span>)</code></pre></div>
+<span class="kw">dbDisconnect</span>(connection)</code></pre></div>
 <pre class="output"><code>full name for dyer: William Dyer</code></pre>
-<p>The key changes are in the query string and the <code>execute</code> call. Instead of formatting the query ourselves, we put question marks in the query template where we want to insert values. When we call <code>execute</code>, we provide a list that contains as many values as there are question marks in the query. The library matches values to question marks in order, and translates any special characters in the values into their escaped equivalents so that they are safe to use.</p>
+<p>The key changes are in the query string and the <code>dbGetQuery</code> call (we use dbGetPreparedQuery instead). Instead of formatting the query ourselves, we put question marks in the query template where we want to insert values. When we call <code>dbGetPreparedQuery</code>, we provide a dataframe that contains as many values as there are question marks in the query. The library matches values to question marks in order, and translates any special characters in the values into their escaped equivalents so that they are safe to use.</p>
 <section class="challenge panel panel-success">
 <div class="panel-heading">
 <h2 id="filling-a-table-vs.printing-values"><span class="glyphicon glyphicon-pencil"></span>Filling a Table vs. Printing Values</h2>

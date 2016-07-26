@@ -12,7 +12,7 @@ minutes: 20
 
 To close,
 let's have a look at how to access a database from
-a general-purpose programming language like Python.
+a data analysis language like R.
 Other languages use almost exactly the same model:
 library and function names may differ,
 but the concepts are the same.
@@ -52,9 +52,6 @@ It's our job to make sure that SQL is properly formatted;
 if it isn't,
 or if something goes wrong when it is being executed,
 the database will report an error.
-
-The database returns the results of the query to us
-in response to the `cursor.fetchall` call on line 5.
 This result is a dataframe with one row for each entry and one column for each column in the database.
 
 Finally, the last line closes our connection,
@@ -126,30 +123,28 @@ We can do this by using a [prepared statement](reference.html#prepared-statement
 instead of formatting our statements as strings.
 Here's what our example program looks like if we do this:
 
-~~~ {.python}
-def get_name(database_file, person_id):
-    query = "SELECT personal || ' ' || family FROM Person WHERE id=?;"
+~~~ {.r}
+library(RSQLite)
+connection <- dbConnect(SQLite(), "survey.db")
 
-    connection = sqlite3.connect(database_file)
-    cursor = connection.cursor()
-    cursor.execute(query, [person_id])
-    results = cursor.fetchall()
-    cursor.close()
-    connection.close()
+getName <- function(personID) {
+  query <- "SELECT personal || ' ' || family FROM Person WHERE ident == ?"
+  dbGetPreparedQuery(connection, query, data.frame(personID))
+}
 
-    return results[0][0]
+print(paste("full name for dyer:", getName('dyer')))
 
-print "full name for dyer:", get_name('survey.sqlite', 'dyer')
+dbDisconnect(connection)
 ~~~
 ~~~ {.output}
 full name for dyer: William Dyer
 ~~~
 
-The key changes are in the query string and the `execute` call.
+The key changes are in the query string and the `dbGetQuery` call (we use dbGetPreparedQuery instead).
 Instead of formatting the query ourselves,
 we put question marks in the query template where we want to insert values.
-When we call `execute`,
-we provide a list
+When we call `dbGetPreparedQuery`,
+we provide a dataframe
 that contains as many values as there are question marks in the query.
 The library matches values to question marks in order,
 and translates any special characters in the values
