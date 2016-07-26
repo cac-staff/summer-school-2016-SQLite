@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Databases and SQL
-subtitle: Programming with Databases - Python
+subtitle: Programming with Databases - R
 minutes: 20
 ---
 > ## Learning Objectives {.objectives}
@@ -17,27 +17,24 @@ Other languages use almost exactly the same model:
 library and function names may differ,
 but the concepts are the same.
 
-Here's a short Python program that selects latitudes and longitudes
-from an SQLite database stored in a file called `survey.sqlite`:
+Here's a short R program that selects latitudes and longitudes
+from an SQLite database stored in a file called `survey.db`:
 
-~~~ {.python}
-import sqlite3
-connection = sqlite3.connect("survey.sqlite")
-cursor = connection.cursor()
-cursor.execute("SELECT Site.lat, Site.long FROM Site;")
-results = cursor.fetchall()
-for r in results:
-    print r
-cursor.close()
-connection.close()
+~~~ {.r}
+library(RSQLite)
+connection <- dbConnect(SQLite(), "survey.db")
+results <- dbGetQuery(connection, "SELECT Site.lat, Site.long FROM Site;")
+print(results)
+dbDisconnect(connection)
 ~~~
 ~~~ {.output}
-(-49.85, -128.57)
-(-47.15, -126.72)
-(-48.87, -123.4)
+     lat    long
+1 -49.85 -128.57
+2 -47.15 -126.72
+3 -48.87 -123.40
 ~~~
 
-The program starts by importing the `sqlite3` library.
+The program starts by importing the `RSQLite` library.
 If we were connecting to MySQL, DB2, or some other database,
 we would import a different library,
 but all of them provide the same functions,
@@ -49,13 +46,8 @@ Line 2 establishes a connection to the database.
 Since we're using SQLite,
 all we need to specify is the name of the database file.
 Other systems may require us to provide a username and password as well.
-Line 3 then uses this connection to create a [cursor](reference.html#cursor).
-Just like the cursor in an editor,
-its role is to keep track of where we are in the database.
 
-On line 4, we use that cursor to ask the database to execute a query for us.
-The query is written in SQL,
-and passed to `cursor.execute` as a string.
+On line 3, we retrieve the results from an SQL query.
 It's our job to make sure that SQL is properly formatted;
 if it isn't,
 or if something goes wrong when it is being executed,
@@ -63,12 +55,9 @@ the database will report an error.
 
 The database returns the results of the query to us
 in response to the `cursor.fetchall` call on line 5.
-This result is a list with one entry for each record in the result set;
-if we loop over that list (line 6) and print those list entries (line 7),
-we can see that each one is a tuple
-with one element for each field we asked for.
+This result is a dataframe with one row for each entry and one column for each column in the database.
 
-Finally, lines 8 and 9 close our cursor and our connection,
+Finally, the last line closes our connection,
 since the database can only keep a limited number of these open at one time.
 Since establishing a connection takes time,
 though,
@@ -83,20 +72,20 @@ Queries in real applications will often depend on values provided by users.
 For example,
 this function takes a user's ID as a parameter and returns their name:
 
-~~~ {.python}
-def get_name(database_file, person_id):
-    query = "SELECT personal || ' ' || family FROM Person WHERE id='" + person_id + "';"
+~~~ {.r}
+library(RSQLite)
 
-    connection = sqlite3.connect(database_file)
-    cursor = connection.cursor()
-    cursor.execute(query)
-    results = cursor.fetchall()
-    cursor.close()
-    connection.close()
+connection <- dbConnect(SQLite(), "survey.db")
 
-    return results[0][0]
+getName <- function(personID) {
+  query <- paste0("SELECT personal || ' ' || family FROM Person WHERE ident =='",
+                  personID, "';")
+  return(dbGetQuery(connection, query))
+}
 
-print "full name for dyer:", get_name('survey.sqlite', 'dyer')
+print(paste("full name for dyer:", getName('dyer')))
+
+dbDisconnect(connection)
 ~~~
 ~~~ {.output}
 full name for dyer: William Dyer
@@ -169,17 +158,17 @@ so that they are safe to use.
 
 > ## Filling a Table vs. Printing Values {.challenge}
 >
-> Write a Python program that creates a new database in a file called
+> Write an R program that creates a new database in a file called
 > `original.db` containing a single table called `Pressure`, with a
 > single field called `reading`, and inserts 100,000 random numbers
 > between 10.0 and 25.0.  How long does it take this program to run?
 > How long does it take to run a program that simply writes those
 > random numbers to a file?
 
-> ## Filtering in SQL vs. Filtering in Python {.challenge}
+> ## Filtering in SQL vs. Filtering in R {.challenge}
 >
-> Write a Python program that creates a new database called
+> Write an R program that creates a new database called
 > `backup.db` with the same structure as `original.db` and copies all
 > the values greater than 20.0 from `original.db` to `backup.db`.
 > Which is faster: filtering values in the query, or reading
-> everything into memory and filtering in Python?
+> everything into memory and filtering in R?
